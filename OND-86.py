@@ -5,7 +5,18 @@ import matplotlib as mpl
 import tkinter as tk
 from tkinter import ttk
 
-def main(s_flow, s_height, s_diameter, s_speed, F, x0, y0, pdk, strat, dT, limit_x, limit_y):
+flow_entry = None
+height_entry = None
+diameter_entry = None
+w0_speed_entry = None
+u_x_entry = None
+u_y_entry = None
+u_pdk_entry = None
+strat_entry = None
+dT_entry = None
+coef_os_entry = None
+
+def main(limit_x, limit_y, s_flow, s_height, s_diameter, s_speed, F, x0, y0, pdk, strat, dT):
     # Part 1: Calculation of maximum concentration
     v = ((pi * s_diameter**2) / 4) * s_speed       # calculation of the volumetric emission
     print('V: %s' % v)
@@ -136,19 +147,35 @@ def main(s_flow, s_height, s_diameter, s_speed, F, x0, y0, pdk, strat, dT, limit
 # dT = 192            # Temperature difference between the emission and the environment
 # coef_os = 1         # Settling coefficient F
 
-def on_button_click():
-    flow = float(flow_entry.get())
-    height = float(height_entry.get())
-    diameter = float(diameter_entry.get())
-    w0_speed = float(w0_speed_entry.get())
-    coef_os = float(coef_os_entry.get())
-    u_x = float(u_x_entry.get())
-    u_y = float(u_y_entry.get())
-    u_pdk = float(u_pdk_entry.get())
-    strat = float(strat_entry.get())
-    dT = float(dT_entry.get())
+def create_input_entry(frame, row, label_text, unit_label_text):
+    label = ttk.Label(frame, text=label_text)
+    label.grid(row=row, column=0, padx=5, pady=5, sticky="e")
 
-    diffusion = main(flow, height, diameter, w0_speed, coef_os, u_x, u_y, u_pdk, strat, dT, 1000, 1000)
+    entry = ttk.Entry(frame)
+    entry.grid(row=row, column=1, padx=5, pady=5)
+
+    unit_label = ttk.Label(frame, text=unit_label_text)
+    unit_label.grid(row=row, column=2, padx=5, pady=5)
+
+    return entry
+
+def on_button_click():
+    input_values = {
+        'limit_x': 1000,
+        'limit_y': 1000,
+        's_flow': float(input_entries[0].get()),
+        's_height': float(input_entries[1].get()),
+        's_diameter': float(input_entries[2].get()),
+        's_speed': float(input_entries[3].get()),
+        'F': float(input_entries[9].get()),
+        'x0': float(input_entries[4].get()),
+        'y0': float(input_entries[5].get()),
+        'pdk': float(input_entries[6].get()),
+        'strat': float(input_entries[7].get()),
+        'dT': float(input_entries[8].get())
+    }
+
+    diffusion = main(**input_values)
 
     ax.clear()
     cmap = mpl.colors.ListedColormap(['green', 'yellow', 'orange', 'red', 'black'])
@@ -159,139 +186,118 @@ def on_button_click():
 
 def autofill_values():
     autofill_values = {
-        'flow': 6,
-        'height': 10,
-        'diameter': 1.3,
-        'w0_speed': 5,
-        'u_x': 500,
-        'u_y': 500,
-        'u_pdk': 0.15,
+        's_flow': 6,
+        's_height': 10,
+        's_diameter': 1.3,
+        's_speed': 5,
+        'x0': 500,
+        'y0': 500,
+        'pdk': 0.15,
         'strat': 135,
         'dT': 192,
-        'coef_os': 1
+        'F': 1
     }
 
-    flow_entry.delete(0, tk.END)
-    flow_entry.insert(0, str(autofill_values['flow']))
-
-    height_entry.delete(0, tk.END)
-    height_entry.insert(0, str(autofill_values['height']))
-
-    diameter_entry.delete(0, tk.END)
-    diameter_entry.insert(0, str(autofill_values['diameter']))
-
-    w0_speed_entry.delete(0, tk.END)
-    w0_speed_entry.insert(0, str(autofill_values['w0_speed']))
-
-    u_x_entry.delete(0, tk.END)
-    u_x_entry.insert(0, str(autofill_values['u_x']))
-
-    u_y_entry.delete(0, tk.END)
-    u_y_entry.insert(0, str(autofill_values['u_y']))
-
-    u_pdk_entry.delete(0, tk.END)
-    u_pdk_entry.insert(0, str(autofill_values['u_pdk']))
-
-    strat_entry.delete(0, tk.END)
-    strat_entry.insert(0, str(autofill_values['strat']))
-
-    dT_entry.delete(0, tk.END)
-    dT_entry.insert(0, str(autofill_values['dT']))
-
-    coef_os_entry.delete(0, tk.END)
-    coef_os_entry.insert(0, str(autofill_values['coef_os']))
+    for entry, value in zip(input_entries, autofill_values.values()):
+        entry.delete(0, tk.END)
+        entry.insert(0, str(value))
 
 root = tk.Tk()
 root.title("Emission Dispersion Calculator")
-
-
 
 variables_frame = ttk.LabelFrame(root, text="Input Variables")
 variables_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
 unit_labels = {
-    'flow': 'g/s',
-    'height': 'm',
-    'diameter': 'm',
-    'w0_speed': 'm/s',
-    'u_x': 'm',
-    'u_y': 'm',
-    'u_pdk': 'g/m³',
-    'strat': '',
-    'dT': '°C',
-    'coef_os': ''
+    'emission_rate': 'g/s',
+    'emission_height': 'm',
+    'emission_diameter': 'm',
+    'emission_speed': 'm/s',
+    'x_coordinate': 'm',
+    'y_coordinate': 'm',
+    'mac': 'g/m³',
+    'stratification_coefficient': '',
+    'temperature_difference': '°C',
+    'settling_coefficient': ''
 }
 
-flow_label = ttk.Label(variables_frame, text="Flow:")
-flow_label.grid(row=0, column=0, padx=5, pady=5, sticky="e")
-flow_entry = ttk.Entry(variables_frame)
-flow_entry.grid(row=0, column=1, padx=5, pady=5)
-flow_unit_label = ttk.Label(variables_frame, text=unit_labels['flow'])
-flow_unit_label.grid(row=0, column=2, padx=5, pady=5)
+input_entries = []
 
-# Аналогічно для інших полів введення
-height_label = ttk.Label(variables_frame, text="Height:")
-height_label.grid(row=1, column=0, padx=5, pady=5, sticky="e")
-height_entry = ttk.Entry(variables_frame)
-height_entry.grid(row=1, column=1, padx=5, pady=5)
-height_unit_label = ttk.Label(variables_frame, text=unit_labels['height'])
-height_unit_label.grid(row=1, column=2, padx=5, pady=5)
+for i, (var, unit) in enumerate(unit_labels.items()):
+    entry = create_input_entry(variables_frame, i, f"{var.capitalize()}:",
+                                unit)
+    input_entries.append(entry)
 
-diameter_label = ttk.Label(variables_frame, text="Diameter:")
-diameter_label.grid(row=2, column=0, padx=5, pady=5, sticky="e")
-diameter_entry = ttk.Entry(variables_frame)
-diameter_entry.grid(row=2, column=1, padx=5, pady=5)
-diameter_unit_label = ttk.Label(variables_frame, text=unit_labels['diameter'])
-diameter_unit_label.grid(row=2, column=2, padx=5, pady=5)
+# flow_label = ttk.Label(variables_frame, text="Flow:")
+# flow_label.grid(row=0, column=0, padx=5, pady=5, sticky="e")
+# flow_entry = ttk.Entry(variables_frame)
+# flow_entry.grid(row=0, column=1, padx=5, pady=5)
+# flow_unit_label = ttk.Label(variables_frame, text=unit_labels['flow'])
+# flow_unit_label.grid(row=0, column=2, padx=5, pady=5)
 
-w0_speed_label = ttk.Label(variables_frame, text="Emission Velocity:")
-w0_speed_label.grid(row=3, column=0, padx=5, pady=5, sticky="e")
-w0_speed_entry = ttk.Entry(variables_frame)
-w0_speed_entry.grid(row=3, column=1, padx=5, pady=5)
-w0_speed_unit_label = ttk.Label(variables_frame, text=unit_labels['w0_speed'])
-w0_speed_unit_label.grid(row=3, column=2, padx=5, pady=5)
+# # Аналогічно для інших полів введення
+# height_label = ttk.Label(variables_frame, text="Height:")
+# height_label.grid(row=1, column=0, padx=5, pady=5, sticky="e")
+# height_entry = ttk.Entry(variables_frame)
+# height_entry.grid(row=1, column=1, padx=5, pady=5)
+# height_unit_label = ttk.Label(variables_frame, text=unit_labels['height'])
+# height_unit_label.grid(row=1, column=2, padx=5, pady=5)
 
-u_x_label = ttk.Label(variables_frame, text="Emission X-coordinate:")
-u_x_label.grid(row=4, column=0, padx=5, pady=5, sticky="e")
-u_x_entry = ttk.Entry(variables_frame)
-u_x_entry.grid(row=4, column=1, padx=5, pady=5)
-u_x_unit_label = ttk.Label(variables_frame, text=unit_labels['u_x'])
-u_x_unit_label.grid(row=4, column=2, padx=5, pady=5)
+# diameter_label = ttk.Label(variables_frame, text="Diameter:")
+# diameter_label.grid(row=2, column=0, padx=5, pady=5, sticky="e")
+# diameter_entry = ttk.Entry(variables_frame)
+# diameter_entry.grid(row=2, column=1, padx=5, pady=5)
+# diameter_unit_label = ttk.Label(variables_frame, text=unit_labels['diameter'])
+# diameter_unit_label.grid(row=2, column=2, padx=5, pady=5)
 
-u_y_label = ttk.Label(variables_frame, text="Emission Y-coordinate:")
-u_y_label.grid(row=5, column=0, padx=5, pady=5, sticky="e")
-u_y_entry = ttk.Entry(variables_frame)
-u_y_entry.grid(row=5, column=1, padx=5, pady=5)
-u_y_unit_label = ttk.Label(variables_frame, text=unit_labels['u_y'])
-u_y_unit_label.grid(row=5, column=2, padx=5, pady=5)
+# w0_speed_label = ttk.Label(variables_frame, text="Emission Velocity:")
+# w0_speed_label.grid(row=3, column=0, padx=5, pady=5, sticky="e")
+# w0_speed_entry = ttk.Entry(variables_frame)
+# w0_speed_entry.grid(row=3, column=1, padx=5, pady=5)
+# w0_speed_unit_label = ttk.Label(variables_frame, text=unit_labels['w0_speed'])
+# w0_speed_unit_label.grid(row=3, column=2, padx=5, pady=5)
 
-u_pdk_label = ttk.Label(variables_frame, text="MAC (u_pdk):")
-u_pdk_label.grid(row=6, column=0, padx=5, pady=5, sticky="e")
-u_pdk_entry = ttk.Entry(variables_frame)
-u_pdk_entry.grid(row=6, column=1, padx=5, pady=5)
-u_pdk_unit_label = ttk.Label(variables_frame, text=unit_labels['u_pdk'])
-u_pdk_unit_label.grid(row=6, column=2, padx=5, pady=5)
+# u_x_label = ttk.Label(variables_frame, text="Emission X-coordinate:")
+# u_x_label.grid(row=4, column=0, padx=5, pady=5, sticky="e")
+# u_x_entry = ttk.Entry(variables_frame)
+# u_x_entry.grid(row=4, column=1, padx=5, pady=5)
+# u_x_unit_label = ttk.Label(variables_frame, text=unit_labels['u_x'])
+# u_x_unit_label.grid(row=4, column=2, padx=5, pady=5)
 
-strat_label = ttk.Label(variables_frame, text="Stratification Coefficient:")
-strat_label.grid(row=7, column=0, padx=5, pady=5, sticky="e")
-strat_entry = ttk.Entry(variables_frame)
-strat_entry.grid(row=7, column=1, padx=5, pady=5)
-strat_unit_label = ttk.Label(variables_frame, text=unit_labels['strat'])
-strat_unit_label.grid(row=7, column=2, padx=5, pady=5)
+# u_y_label = ttk.Label(variables_frame, text="Emission Y-coordinate:")
+# u_y_label.grid(row=5, column=0, padx=5, pady=5, sticky="e")
+# u_y_entry = ttk.Entry(variables_frame)
+# u_y_entry.grid(row=5, column=1, padx=5, pady=5)
+# u_y_unit_label = ttk.Label(variables_frame, text=unit_labels['u_y'])
+# u_y_unit_label.grid(row=5, column=2, padx=5, pady=5)
 
-dT_label = ttk.Label(variables_frame, text="Temperature Difference:")
-dT_label.grid(row=8, column=0, padx=5, pady=5, sticky="e")
-dT_entry = ttk.Entry(variables_frame)
-dT_entry.grid(row=8, column=1, padx=5, pady=5)
-dT_unit_label = ttk.Label(variables_frame, text=unit_labels['dT'])
-dT_unit_label.grid(row=8, column=2, padx=5, pady=5)
+# u_pdk_label = ttk.Label(variables_frame, text="MAC (u_pdk):")
+# u_pdk_label.grid(row=6, column=0, padx=5, pady=5, sticky="e")
+# u_pdk_entry = ttk.Entry(variables_frame)
+# u_pdk_entry.grid(row=6, column=1, padx=5, pady=5)
+# u_pdk_unit_label = ttk.Label(variables_frame, text=unit_labels['u_pdk'])
+# u_pdk_unit_label.grid(row=6, column=2, padx=5, pady=5)
 
-coef_os_label = ttk.Label(variables_frame, text="Settling Coefficient (F):")
-coef_os_label.grid(row=9, column=0, padx=5, pady=5, sticky="e")
-coef_os_entry = ttk.Entry(variables_frame)
-coef_os_entry.grid(row=9, column=1, padx=5, pady=5)
-coef_os_unit_label = ttk.Label(variables_frame, text=unit_labels['coef_os'])
-coef_os_unit_label.grid(row=9, column=2, padx=5, pady=5)
+# strat_label = ttk.Label(variables_frame, text="Stratification Coefficient:")
+# strat_label.grid(row=7, column=0, padx=5, pady=5, sticky="e")
+# strat_entry = ttk.Entry(variables_frame)
+# strat_entry.grid(row=7, column=1, padx=5, pady=5)
+# strat_unit_label = ttk.Label(variables_frame, text=unit_labels['strat'])
+# strat_unit_label.grid(row=7, column=2, padx=5, pady=5)
+
+# dT_label = ttk.Label(variables_frame, text="Temperature Difference:")
+# dT_label.grid(row=8, column=0, padx=5, pady=5, sticky="e")
+# dT_entry = ttk.Entry(variables_frame)
+# dT_entry.grid(row=8, column=1, padx=5, pady=5)
+# dT_unit_label = ttk.Label(variables_frame, text=unit_labels['dT'])
+# dT_unit_label.grid(row=8, column=2, padx=5, pady=5)
+
+# coef_os_label = ttk.Label(variables_frame, text="Settling Coefficient (F):")
+# coef_os_label.grid(row=9, column=0, padx=5, pady=5, sticky="e")
+# coef_os_entry = ttk.Entry(variables_frame)
+# coef_os_entry.grid(row=9, column=1, padx=5, pady=5)
+# coef_os_unit_label = ttk.Label(variables_frame, text=unit_labels['coef_os'])
+# coef_os_unit_label.grid(row=9, column=2, padx=5, pady=5)
 
 ##############
 
